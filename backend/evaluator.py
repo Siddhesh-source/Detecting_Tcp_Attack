@@ -10,28 +10,28 @@ Provides:
 """
 
 from __future__ import annotations
-import os
+
 import json
+import os
+
 import numpy as np
 import pandas as pd
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    confusion_matrix,
-    roc_auc_score,
-    make_scorer,
-)
-from sklearn.model_selection import StratifiedKFold, cross_validate
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
-from imblearn.pipeline import Pipeline as ImbPipeline
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import StandardScaler
 
-from ml_model import FlowDetector, FEATURE_COLS, CIC_TO_OUR
 from feature_extractor import FEATURE_LAYER_MAP
+from ml_model import CIC_TO_OUR, FEATURE_COLS, FlowDetector
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -328,9 +328,12 @@ def evaluate_cross_validate(csv_path: str = PROCESSED_CSV) -> dict:
         "folds": fold_results,
     }
 
-    print(f"[Evaluator] CV Results: recall={cv_metrics['recall_mean']:.4f}±{cv_metrics['recall_std']:.4f}, "
-          f"F1={cv_metrics['f1_mean']:.4f}±{cv_metrics['f1_std']:.4f}, "
-          f"detection_rate={cv_metrics['attack_detection_rate']}%")
+    print(
+        f"[Evaluator] CV Results: recall={cv_metrics['recall_mean']:.4f}"
+        f"±{cv_metrics['recall_std']:.4f}, "
+        f"F1={cv_metrics['f1_mean']:.4f}±{cv_metrics['f1_std']:.4f}, "
+        f"detection_rate={cv_metrics['attack_detection_rate']}%"
+    )
 
     return cv_metrics
 
@@ -397,11 +400,11 @@ def generate_evaluation_report(
     lines = [
         "## Detection Evaluation Report",
         "",
-        f"**Dataset**: CIC-IDS2017 (Infiltration subset)",
+        "**Dataset**: CIC-IDS2017 (Infiltration subset)",
         "",
-        f"**Model**: Random Forest (100 estimators, undersample + SMOTE)",
+        "**Model**: Random Forest (100 estimators, undersample + SMOTE)",
         "",
-        f"**Train/Test Split**: 80/20 stratified",
+        "**Train/Test Split**: 80/20 stratified",
         "",
         "### ⚠️ Class Imbalance Warning",
         "",
@@ -447,14 +450,19 @@ def generate_evaluation_report(
             "",
             f"Attack detection rate across all folds: "
             f"**{cv_metrics.get('attack_detection_rate', 0)}%** "
-            f"({cv_metrics.get('total_detected_across_folds', 0)}/{cv_metrics.get('total_attacks_across_folds', 0)} attacks)",
+            f"({cv_metrics.get('total_detected_across_folds', 0)}/"
+            f"{cv_metrics.get('total_attacks_across_folds', 0)} attacks)",
             "",
             "| Metric | Mean | Std Dev |",
             "|--------|------|---------|",
-            f"| Precision | {cv_metrics.get('precision_mean', 0):.4f} | ±{cv_metrics.get('precision_std', 0):.4f} |",
-            f"| Recall | {cv_metrics.get('recall_mean', 0):.4f} | ±{cv_metrics.get('recall_std', 0):.4f} |",
-            f"| F1 Score | {cv_metrics.get('f1_mean', 0):.4f} | ±{cv_metrics.get('f1_std', 0):.4f} |",
-            f"| ROC-AUC | {cv_metrics.get('roc_auc_mean', 0):.4f} | ±{cv_metrics.get('roc_auc_std', 0):.4f} |",
+            f"| Precision | {cv_metrics.get('precision_mean', 0):.4f} | "
+            f"±{cv_metrics.get('precision_std', 0):.4f} |",
+            f"| Recall | {cv_metrics.get('recall_mean', 0):.4f} | "
+            f"±{cv_metrics.get('recall_std', 0):.4f} |",
+            f"| F1 Score | {cv_metrics.get('f1_mean', 0):.4f} | "
+            f"±{cv_metrics.get('f1_std', 0):.4f} |",
+            f"| ROC-AUC | {cv_metrics.get('roc_auc_mean', 0):.4f} | "
+            f"±{cv_metrics.get('roc_auc_std', 0):.4f} |",
             "",
         ])
 
@@ -465,7 +473,10 @@ def generate_evaluation_report(
     ])
     if fi:
         for item in fi:
-            lines.append(f"- **{item['feature']}** — importance: {item['importance']:.6f} (OSI: {item['layer']})")
+            lines.append(
+                f"- **{item['feature']}** — importance: "
+                f"{item['importance']:.6f} (OSI: {item['layer']})"
+            )
     else:
         lines.append("_No feature importance available_")
 
@@ -478,7 +489,10 @@ def generate_evaluation_report(
         "|---|-----------|--------|-----------|",
     ])
     for rule in SCORING_RULES:
-        lines.append(f"| {rule['id']} | `{rule['condition']}` | {rule['points']} | {rule['layer']} |")
+        lines.append(
+            f"| {rule['id']} | `{rule['condition']}` | "
+            f"{rule['points']} | {rule['layer']} |"
+        )
 
     return "\n".join(lines)
 

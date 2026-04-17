@@ -13,15 +13,16 @@ Unsupervised mode:
 """
 
 from __future__ import annotations
+
 import os
+
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
-from sklearn.ensemble import RandomForestClassifier, IsolationForest
-from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
-from imblearn.pipeline import Pipeline as ImbPipeline
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
 
 # ---------------------------------------------------------------------------
 # Feature columns the model operates on

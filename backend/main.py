@@ -31,20 +31,38 @@ import time
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, UploadFile, File, Query
+from fastapi import (
+    FastAPI,
+    File,
+    Query,
+    Request,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from capture import capture_live, read_pcap
-from flow_builder import FlowBuilder
-from feature_extractor import extract_features
-from scorer import compute_suspicion
-from ml_model import FlowDetector
 from database import (
-    init_db, insert_flow, get_all_flows, get_alerts, get_layer_stats,
-    get_stats, get_alerts_for_export,
+    get_alerts,
+    get_alerts_for_export,
+    get_all_flows,
+    get_layer_stats,
+    get_stats,
+    init_db,
+    insert_flow,
 )
-from evaluator import evaluate_model, get_feature_importance, generate_evaluation_report, save_evaluation_report, get_cached_report
+from evaluator import (
+    evaluate_model,
+    generate_evaluation_report,
+    get_feature_importance,
+    save_evaluation_report,
+)
+from feature_extractor import extract_features
+from flow_builder import FlowBuilder
+from ml_model import FlowDetector
+from scorer import compute_suspicion
 
 # ---------------------------------------------------------------------------
 # Paths

@@ -7,8 +7,8 @@ Provides:
 """
 
 import asyncio
-import time
-from scapy.all import sniff, rdpcap, TCP
+
+from scapy.all import TCP, rdpcap, sniff
 
 
 def _packet_to_dict(pkt) -> dict | None:
