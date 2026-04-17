@@ -1,0 +1,42 @@
+[project]
+name = "tcp-covert-channel-detector"
+version = "1.0.0"
+description = "Real-time covert channel and data exfiltration detection using TCP/IP metadata"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+authors = [
+    {name = "TCP Covert Channel Detector Contributors"},
+]
+
+[project.optional-dependencies]
+backend = [
+    "fastapi",
+    "uvicorn[standard]",
+    "scapy",
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "imbalanced-learn",
+    "websockets",
+    "aiosqlite",
+    "python-multipart",
+    "joblib",
+]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "ruff",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests", "backend/tests"]

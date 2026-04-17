@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+scapy
+pandas
+numpy
+scikit-learn
+imbalanced-learn
+websockets
+aiosqlite
+python-multipart
+joblib

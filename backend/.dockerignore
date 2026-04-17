@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Data — mount as volume instead
+../data/
+
+# Model artifacts — regenerated on startup
+model_artifacts/
+*.db
+
+# Development
+*.log
+.pytest_cache/

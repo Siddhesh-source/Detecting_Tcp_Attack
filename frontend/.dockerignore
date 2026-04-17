@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+
+# Development
+*.log
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

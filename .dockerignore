@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Data — mounted as volume
+data/processed/
+
+# Model artifacts
+model_artifacts/
+*.joblib
+*.db
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
