@@ -10,7 +10,6 @@ are returned by get_completed_flows() and removed from the active set.
 """
 
 from __future__ import annotations
-
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
