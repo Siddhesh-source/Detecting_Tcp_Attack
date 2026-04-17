@@ -30,7 +30,6 @@ import os
 import time
 from contextlib import asynccontextmanager
 from typing import Optional
-
 from fastapi import (
     FastAPI,
     File,
@@ -42,7 +41,6 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-
 from capture import capture_live, read_pcap
 from database import (
     get_alerts,
