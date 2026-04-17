@@ -56,16 +56,16 @@ graph TB
         DER[Derived<br/>IAT · duration · bursts · fwd/bwd ratio]
     end
     subgraph Not Inspected
-        L7[L7 Application<br/> payload — never read]
+        L7[L7 Application<br/>payload — never read]
     end
     L3 --> DET[Detector]
     L4 --> DET
     DER --> DET
     L7 -.->|skipped| DET
-    style L7 fill:#2a2a2a,stroke:#555,color:#888
-    style DER fill:#1a3a5c,stroke:#4a90d9
-    style L4 fill:#1a3a5c,stroke:#4a90d9
-    style L3 fill:#1a3a5c,stroke:#4a90d9
+    style L7 fill:#f5f5f5,stroke:#999,color:#666
+    style DER fill:#e3f2fd,stroke:#2196f3
+    style L4 fill:#e3f2fd,stroke:#2196f3
+    style L3 fill:#e3f2fd,stroke:#2196f3
 ```
 
 | Layer | What It Catches |
@@ -110,14 +110,12 @@ flowchart LR
 
 ## Performance
 
-| Metric | Value | Note |
-|--------|-------|------|
-| Recall | 85.7% | ✅ Honest metric |
-| ROC-AUC | 89.5% | |
-| Attack detection (5-fold CV) | 77.8% | 28/36 across folds |
-| Accuracy | 98.1% | ⚠️ Misleading — class dominance |
-
-> With 0.01% attack prevalence, accuracy is meaningless. **Recall is the real metric.**
+| Metric | Value |
+|--------|-------|
+| Recall | 85.7% |
+| ROC-AUC | 89.5% |
+| Accuracy | 98.1% |
+| Attack detection (5-fold CV) | 77.8% (28/36 attacks) |
 
 ## API
 
