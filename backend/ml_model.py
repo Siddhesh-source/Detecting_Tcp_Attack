@@ -1,5 +1,5 @@
 """
-ML model – FlowDetector class supporting both supervised and unsupervised modes.
+ML model - FlowDetector class supporting both supervised and unsupervised modes.
 
 Supervised mode:
   - RandomForestClassifier trained on real CIC-IDS2017 data
@@ -117,7 +117,7 @@ class FlowDetector:
         Train RandomForestClassifier on the real CIC-IDS2017 training split.
 
         Pipeline to handle extreme imbalance:
-          1. Undersample majority (BENIGN) to 10× minority count
+          1. Undersample majority (BENIGN) to 10x minority count
           2. SMOTE oversample minority to match majority
           3. StandardScaler + RandomForest with class_weight="balanced"
 
@@ -159,10 +159,10 @@ class FlowDetector:
         print(f"    Infiltration: {n_attack}")
         print(f"    Imbalance:    {n_benign / max(n_attack, 1):.0f}:1")
 
-        # ---- Step 1: Undersample majority to 10× minority ----------------
+        # ---- Step 1: Undersample majority to 10x minority ----------------
         target_majority = min(n_benign, n_attack * 10)
         if n_benign > target_majority:
-            print(f"  Undersampling majority from {n_benign} → {target_majority}")
+            print(f"  Undersampling majority from {n_benign} -> {target_majority}")
             rus = RandomUnderSampler(
                 sampling_strategy={0: target_majority, 1: n_attack},
                 random_state=42,
@@ -183,7 +183,7 @@ class FlowDetector:
             X, y = smote.fit_resample(X, y)
             print(f"    After SMOTE: BENIGN={(y == 0).sum()}, Attack={(y == 1).sum()}")
         else:
-            print("  WARNING: Too few minority samples for SMOTE — skipping")
+            print("  WARNING: Too few minority samples for SMOTE - skipping")
 
         self.training_info["final_benign"] = int((y == 0).sum())
         self.training_info["final_attack"] = int((y == 1).sum())
@@ -216,8 +216,10 @@ class FlowDetector:
         Only trains if len(flow_records) > 20.
         """
         if len(flow_records) < 20:
-            print("[FlowDetector] Not enough records for unsupervised training "
-                  f"({len(flow_records)} < 20)")
+            print(
+                "[FlowDetector] Not enough records for unsupervised training "
+                f"({len(flow_records)} < 20)",
+            )
             return
 
         print(f"[FlowDetector] Training IsolationForest on {len(flow_records)} flows")
@@ -261,7 +263,7 @@ class FlowDetector:
 
     def predict_proba(self, flow_dict: dict) -> float:
         """
-        Return probability of attack class (0.0–1.0).
+        Return probability of attack class (0.0-1.0).
         Only available in supervised mode.
         """
         if self.mode != "supervised" or self.rf_model is None:
@@ -300,7 +302,7 @@ class FlowDetector:
     # Internal array builders
     # ------------------------------------------------------------------
     def _flow_to_array(self, flow_dict: dict) -> np.ndarray:
-        """Build a 1×N feature array from a single flow dict."""
+        """Build a 1xN feature array from a single flow dict."""
         row = [float(flow_dict.get(col, 0.0)) for col in FEATURE_COLS]
         X = np.array(row, dtype=float).reshape(1, -1)
         X = np.where(np.isfinite(X), X, 0.0)
@@ -308,7 +310,7 @@ class FlowDetector:
 
     @staticmethod
     def _records_to_array(flow_records: list[dict]) -> np.ndarray:
-        """Build an M×N feature array from a list of flow dicts."""
+        """Build an MxN feature array from a list of flow dicts."""
         rows = []
         for rec in flow_records:
             row = [float(rec.get(col, 0.0)) for col in FEATURE_COLS]

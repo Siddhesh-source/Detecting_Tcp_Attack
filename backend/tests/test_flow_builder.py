@@ -9,8 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from flow_builder import FlowBuilder
 
 
-def _make_packet(src_ip="10.0.0.1", dst_ip="10.0.0.2",
-                 src_port=12345, dst_port=80, **extra):
+def _make_packet(src_ip="10.0.0.1", dst_ip="10.0.0.2", src_port=12345, dst_port=80, **extra):
     pkt = {
         "timestamp": time.time(),
         "src_ip": src_ip,

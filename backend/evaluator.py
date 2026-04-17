@@ -1,22 +1,25 @@
 """
-Evaluator – honest model evaluation for extremely imbalanced data.
+Evaluator - honest model evaluation for extremely imbalanced data.
 
 Provides:
-  - evaluate_model()          → single test-set metrics
-  - evaluate_cross_validate() → stratified 5-fold CV with honest metrics
-  - get_feature_importance()  → top-10 features with OSI layer tags
-  - generate_evaluation_report() → markdown report with imbalance warnings
-  - init_evaluator()         → run once at startup, cache result
+  - evaluate_model()          -> single test-set metrics
+  - evaluate_cross_validate() -> stratified 5-fold CV with honest metrics
+  - get_feature_importance()  -> top-10 features with OSI layer tags
+  - generate_evaluation_report() -> markdown report with imbalance warnings
+  - init_evaluator()         -> run once at startup, cache result
 """
 
 from __future__ import annotations
+
 import json
 import os
 
 import numpy as np
 import pandas as pd
+from feature_extractor import FEATURE_LAYER_MAP
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
+from ml_model import CIC_TO_OUR, FEATURE_COLS, FlowDetector
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
@@ -28,9 +31,6 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
-
-from feature_extractor import FEATURE_LAYER_MAP
-from ml_model import CIC_TO_OUR, FEATURE_COLS, FlowDetector
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -183,7 +183,7 @@ def evaluate_model(model: FlowDetector, test_csv_path: str = TEST_CSV) -> dict:
         "f1": round(float(f1), 4),
         "roc_auc": round(float(roc_auc), 4),
         "confusion_matrix": [[tn, fp], [fn, tp]],
-        "total_test_samples": int(len(y_true)),
+        "total_test_samples": len(y_true),
         "test_benign": n_benign,
         "test_attack": n_attack,
         "attack_detected": int(tp),
@@ -209,11 +209,11 @@ def evaluate_cross_validate(csv_path: str = PROCESSED_CSV) -> dict:
     Run stratified 5-fold cross-validation on the FULL processed dataset.
 
     Each fold:
-      1. Undersample majority to 10× minority
+      1. Undersample majority to 10x minority
       2. SMOTE minority to match
       3. Train RF, evaluate on held-out fold
 
-    Returns mean ± std for precision, recall, F1, ROC-AUC.
+    Returns mean +/- std for precision, recall, F1, ROC-AUC.
     Much more reliable than single split with 7 test samples.
     """
     if not os.path.exists(csv_path):
@@ -235,7 +235,7 @@ def evaluate_cross_validate(csv_path: str = PROCESSED_CSV) -> dict:
         n_train_attack = int((y_train == 1).sum())
         n_train_benign = int((y_train == 0).sum())
 
-        # Undersample majority to 10× minority
+        # Undersample majority to 10x minority
         target_majority = min(n_train_benign, n_train_attack * 10)
         if n_train_benign > target_majority and n_train_attack >= 2:
             rus = RandomUnderSampler(
@@ -263,8 +263,10 @@ def evaluate_cross_validate(csv_path: str = PROCESSED_CSV) -> dict:
 
         # Train
         clf = RandomForestClassifier(
-            n_estimators=100, random_state=42,
-            class_weight="balanced", n_jobs=-1,
+            n_estimators=100,
+            random_state=42,
+            class_weight="balanced",
+            n_jobs=-1,
         )
         clf.fit(X_train_s, y_train)
 
@@ -284,21 +286,26 @@ def evaluate_cross_validate(csv_path: str = PROCESSED_CSV) -> dict:
         except Exception:
             pass
 
-        fold_results.append({
-            "precision": fold_prec,
-            "recall": fold_rec,
-            "f1": fold_f1,
-            "roc_auc": fold_auc,
-            "test_attack": int((y_test == 1).sum()),
-            "test_benign": int((y_test == 0).sum()),
-            "tp": int(((y_test == 1) & (y_pred == 1)).sum()),
-            "fn": int(((y_test == 1) & (y_pred == 0)).sum()),
-        })
+        fold_results.append(
+            {
+                "precision": fold_prec,
+                "recall": fold_rec,
+                "f1": fold_f1,
+                "roc_auc": fold_auc,
+                "test_attack": int((y_test == 1).sum()),
+                "test_benign": int((y_test == 0).sum()),
+                "tp": int(((y_test == 1) & (y_pred == 1)).sum()),
+                "fn": int(((y_test == 1) & (y_pred == 0)).sum()),
+            },
+        )
 
         fold_rec_pct = round(fold_rec * 100, 1)
-        print(f"  Fold {fold_i+1}/5: precision={fold_prec:.4f}, recall={fold_rec_pct}%, "
-              f"F1={fold_f1:.4f}, AUC={fold_auc:.4f}, "
-              f"attacks={int((y_test==1).sum())}, caught={int(((y_test==1)&(y_pred==1)).sum())}")
+        n_attacks = int((y_test == 1).sum())
+        n_caught = int(((y_test == 1) & (y_pred == 1)).sum())
+        print(
+            f"  Fold {fold_i + 1}/5: precision={fold_prec:.4f}, recall={fold_rec_pct}%, "
+            f"F1={fold_f1:.4f}, AUC={fold_auc:.4f}, attacks={n_attacks}, caught={n_caught}",
+        )
 
     # Aggregate
     precs = [f["precision"] for f in fold_results]
@@ -331,7 +338,7 @@ def evaluate_cross_validate(csv_path: str = PROCESSED_CSV) -> dict:
         f"[Evaluator] CV Results: recall={cv_metrics['recall_mean']:.4f}"
         f"±{cv_metrics['recall_std']:.4f}, "
         f"F1={cv_metrics['f1_mean']:.4f}±{cv_metrics['f1_std']:.4f}, "
-        f"detection_rate={cv_metrics['attack_detection_rate']}%"
+        f"detection_rate={cv_metrics['attack_detection_rate']}%",
     )
 
     return cv_metrics
@@ -356,11 +363,13 @@ def get_feature_importance(model: FlowDetector) -> list[dict]:
     top = []
     for feature, importance in paired[:10]:
         layer = FEATURE_LAYER_MAP.get(feature, "Derived")
-        top.append({
-            "feature": feature,
-            "importance": round(float(importance), 6),
-            "layer": layer,
-        })
+        top.append(
+            {
+                "feature": feature,
+                "importance": round(float(importance), 6),
+                "layer": layer,
+            },
+        )
     return top
 
 
@@ -426,71 +435,78 @@ def generate_evaluation_report(
     prec_note = "⚠️ Inflated by class imbalance" if minority_pct < 1 else ""
     rec_note = "✅ Honest metric" if test_metrics.get("recall", 0) > 0 else ""
 
-    lines.extend([
-        f"| Accuracy | {pct(test_metrics.get('accuracy'))} | {acc_note} |",
-        f"| Precision | {pct(test_metrics.get('precision'))} | {prec_note} |",
-        f"| Recall | {pct(test_metrics.get('recall'))} | {rec_note} |",
-        f"| F1 Score | {pct(test_metrics.get('f1'))} | |",
-        f"| ROC-AUC | {pct(test_metrics.get('roc_auc'))} | |",
-        "",
-        "### Confusion Matrix",
-        "",
-        "| | Predicted BENIGN | Predicted ATTACK |",
-        "|---|---|---|",
-        f"| Actual BENIGN | {tn} | {fp} |",
-        f"| Actual ATTACK | {fn} | {tp} |",
-        "",
-    ])
+    lines.extend(
+        [
+            f"| Accuracy | {pct(test_metrics.get('accuracy'))} | {acc_note} |",
+            f"| Precision | {pct(test_metrics.get('precision'))} | {prec_note} |",
+            f"| Recall | {pct(test_metrics.get('recall'))} | {rec_note} |",
+            f"| F1 Score | {pct(test_metrics.get('f1'))} | |",
+            f"| ROC-AUC | {pct(test_metrics.get('roc_auc'))} | |",
+            "",
+            "### Confusion Matrix",
+            "",
+            "| | Predicted BENIGN | Predicted ATTACK |",
+            "|---|---|---|",
+            f"| Actual BENIGN | {tn} | {fp} |",
+            f"| Actual ATTACK | {fn} | {tp} |",
+            "",
+        ],
+    )
 
     # Cross-validation results
     if cv_metrics and "error" not in cv_metrics:
-        lines.extend([
-            "### Stratified 5-Fold Cross-Validation (More Reliable)",
-            "",
-            f"Attack detection rate across all folds: "
-            f"**{cv_metrics.get('attack_detection_rate', 0)}%** "
-            f"({cv_metrics.get('total_detected_across_folds', 0)}/"
-            f"{cv_metrics.get('total_attacks_across_folds', 0)} attacks)",
-            "",
-            "| Metric | Mean | Std Dev |",
-            "|--------|------|---------|",
-            f"| Precision | {cv_metrics.get('precision_mean', 0):.4f} | "
-            f"±{cv_metrics.get('precision_std', 0):.4f} |",
-            f"| Recall | {cv_metrics.get('recall_mean', 0):.4f} | "
-            f"±{cv_metrics.get('recall_std', 0):.4f} |",
-            f"| F1 Score | {cv_metrics.get('f1_mean', 0):.4f} | "
-            f"±{cv_metrics.get('f1_std', 0):.4f} |",
-            f"| ROC-AUC | {cv_metrics.get('roc_auc_mean', 0):.4f} | "
-            f"±{cv_metrics.get('roc_auc_std', 0):.4f} |",
-            "",
-        ])
+        lines.extend(
+            [
+                "### Stratified 5-Fold Cross-Validation (More Reliable)",
+                "",
+                f"Attack detection rate across all folds: "
+                f"**{cv_metrics.get('attack_detection_rate', 0)}%** "
+                f"({cv_metrics.get('total_detected_across_folds', 0)}/"
+                f"{cv_metrics.get('total_attacks_across_folds', 0)} attacks)",
+                "",
+                "| Metric | Mean | Std Dev |",
+                "|--------|------|---------|",
+                f"| Precision | {cv_metrics.get('precision_mean', 0):.4f} | "
+                f"±{cv_metrics.get('precision_std', 0):.4f} |",
+                f"| Recall | {cv_metrics.get('recall_mean', 0):.4f} | "
+                f"±{cv_metrics.get('recall_std', 0):.4f} |",
+                f"| F1 Score | {cv_metrics.get('f1_mean', 0):.4f} | "
+                f"±{cv_metrics.get('f1_std', 0):.4f} |",
+                f"| ROC-AUC | {cv_metrics.get('roc_auc_mean', 0):.4f} | "
+                f"±{cv_metrics.get('roc_auc_std', 0):.4f} |",
+                "",
+            ],
+        )
 
     # Feature importance
-    lines.extend([
-        "### Feature Importance (Top 5)",
-        "",
-    ])
+    lines.extend(
+        [
+            "### Feature Importance (Top 5)",
+            "",
+        ],
+    )
     if fi:
         for item in fi:
             lines.append(
                 f"- **{item['feature']}** — importance: "
-                f"{item['importance']:.6f} (OSI: {item['layer']})"
+                f"{item['importance']:.6f} (OSI: {item['layer']})",
             )
     else:
         lines.append("_No feature importance available_")
 
     # Rules
-    lines.extend([
-        "",
-        "### Detection Rules Summary",
-        "",
-        "| # | Condition | Points | OSI Layer |",
-        "|---|-----------|--------|-----------|",
-    ])
+    lines.extend(
+        [
+            "",
+            "### Detection Rules Summary",
+            "",
+            "| # | Condition | Points | OSI Layer |",
+            "|---|-----------|--------|-----------|",
+        ],
+    )
     for rule in SCORING_RULES:
         lines.append(
-            f"| {rule['id']} | `{rule['condition']}` | "
-            f"{rule['points']} | {rule['layer']} |"
+            f"| {rule['id']} | `{rule['condition']}` | {rule['points']} | {rule['layer']} |",
         )
 
     return "\n".join(lines)
@@ -533,12 +549,14 @@ def init_evaluator(model: FlowDetector) -> dict:
 
     # 1. Single test-set evaluation
     _cached_metrics = evaluate_model(model, TEST_CSV)
-    print(f"[Evaluator] Test set: accuracy={_cached_metrics.get('accuracy')}, "
-          f"recall={_cached_metrics.get('recall')}, "
-          f"f1={_cached_metrics.get('f1')}, "
-          f"attacks={_cached_metrics.get('test_attack')}, "
-          f"detected={_cached_metrics.get('attack_detected')}, "
-          f"missed={_cached_metrics.get('attack_missed')}")
+    print(
+        f"[Evaluator] Test set: accuracy={_cached_metrics.get('accuracy')}, "
+        f"recall={_cached_metrics.get('recall')}, "
+        f"f1={_cached_metrics.get('f1')}, "
+        f"attacks={_cached_metrics.get('test_attack')}, "
+        f"detected={_cached_metrics.get('attack_detected')}, "
+        f"missed={_cached_metrics.get('attack_missed')}",
+    )
 
     # 2. Cross-validation (uses full processed dataset)
     cv_metrics = {}

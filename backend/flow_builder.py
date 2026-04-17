@@ -1,5 +1,5 @@
 """
-FlowBuilder – groups individual packets into bidirectional TCP flows.
+FlowBuilder - groups individual packets into bidirectional TCP flows.
 
 A flow is identified by the 5-tuple
     (src_ip, dst_ip, src_port, dst_port, protocol)
@@ -10,10 +10,10 @@ are returned by get_completed_flows() and removed from the active set.
 """
 
 from __future__ import annotations
+
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
-
 
 FlowKey = Tuple[str, str, int, int, str]
 
@@ -37,7 +37,7 @@ class FlowBuilder:
     def _normalize_key(self, pkt: dict) -> FlowKey:
         """
         Normalize so that packets in both directions land in the same flow.
-        Sort the IP+port pairs so (A→B) and (B→A) share a key.
+        Sort the IP+port pairs so (A->B) and (B->A) share a key.
         """
         a = (pkt["src_ip"], pkt["src_port"])
         b = (pkt["dst_ip"], pkt["dst_port"])

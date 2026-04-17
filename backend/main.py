@@ -9,19 +9,19 @@ STARTUP SEQUENCE (in order):
   5. Log accuracy and F1 to console
 
 ENDPOINTS:
-  GET  /flows              – all flows (limit param)
-  GET  /alerts             – flows where suspicion_score >= threshold (default 50)
-  GET  /stats              – aggregate stats + top 5 suspicious IPs
-  GET  /metrics            – model evaluation (accuracy, precision, recall, F1, cm)
-  GET  /features/importance – top features with OSI layer tags
-  GET  /layers/stats       – alert counts grouped by OSI layer
-  POST /capture/start      – body: {"interface": "eth0"}
+  GET  /flows              - all flows (limit param)
+  GET  /alerts             - flows where suspicion_score >= threshold (default 50)
+  GET  /stats              - aggregate stats + top 5 suspicious IPs
+  GET  /metrics            - model evaluation (accuracy, precision, recall, F1, cm)
+  GET  /features/importance - top features with OSI layer tags
+  GET  /layers/stats       - alert counts grouped by OSI layer
+  POST /capture/start      - body: {"interface": "eth0"}
   POST /capture/stop
-  POST /upload/pcap         – file upload
-  GET  /export/alerts      – CSV download
+  POST /upload/pcap         - file upload
+  GET  /export/alerts      - CSV download
 
 WEBSOCKET:
-  ws://localhost:8000/ws/flows  – broadcast each new flow as JSON
+  ws://localhost:8000/ws/flows  - broadcast each new flow as JSON
 """
 
 import asyncio
@@ -30,18 +30,6 @@ import os
 import time
 from contextlib import asynccontextmanager
 from typing import Optional
-
-from fastapi import (
-    FastAPI,
-    File,
-    Query,
-    Request,
-    UploadFile,
-    WebSocket,
-    WebSocketDisconnect,
-)
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 
 from capture import capture_live, read_pcap
 from database import (
@@ -59,6 +47,17 @@ from evaluator import (
     get_feature_importance,
     save_evaluation_report,
 )
+from fastapi import (
+    FastAPI,
+    File,
+    Query,
+    Request,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+)
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from feature_extractor import extract_features
 from flow_builder import FlowBuilder
 from ml_model import FlowDetector
@@ -80,6 +79,7 @@ capture_task: Optional[asyncio.Task] = None
 stop_event = asyncio.Event()
 packet_queue: asyncio.Queue = asyncio.Queue()
 detector = FlowDetector()
+_background_tasks: set[asyncio.Task] = set()
 
 
 # ======================================================================
@@ -170,7 +170,7 @@ async def _process_packets():
             # Extract features (includes tcp_layer, feature_layer_map)
             features = extract_features(flow)
 
-            # Rule-based scoring (0–100 points)
+            # Rule-based scoring (0-100 points)
             score, reasons = compute_suspicion(features)
 
             # ML prediction
@@ -232,6 +232,7 @@ async def ws_flows(ws: WebSocket):
 # ======================================================================
 # REST ENDPOINTS
 # ======================================================================
+
 
 # ----- Flows -----------------------------------------------------------
 @app.get("/flows")
@@ -295,11 +296,11 @@ async def start_capture(request: Request):
         return {"status": "already_running"}
 
     stop_event.clear()
-    capture_task = asyncio.create_task(
-        capture_live(interface, packet_queue, stop_event)
-    )
+    capture_task = asyncio.create_task(capture_live(interface, packet_queue, stop_event))
     # Start the processing loop too
-    asyncio.create_task(_process_packets())
+    task = asyncio.create_task(_process_packets())
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
     return {"status": "started", "interface": interface}
 
 
@@ -315,12 +316,15 @@ async def stop_capture():
 @app.post("/upload/pcap")
 async def upload_pcap(file: UploadFile = File(...)):
     import tempfile
+
     tmp = os.path.join(tempfile.gettempdir(), file.filename)
     with open(tmp, "wb") as f:
         f.write(await file.read())
 
     await read_pcap(tmp, packet_queue)
-    asyncio.create_task(_process_packets())
+    task = asyncio.create_task(_process_packets())
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
     return {"status": "pcap_queued", "filename": file.filename}
 
 
@@ -335,9 +339,7 @@ async def export_alerts(threshold: float = Query(default=50, ge=0, le=100)):
     return StreamingResponse(
         io.StringIO(csv_data),
         media_type="text/csv",
-        headers={
-            "Content-Disposition": "attachment; filename=alerts.csv"
-        },
+        headers={"Content-Disposition": "attachment; filename=alerts.csv"},
     )
 
 

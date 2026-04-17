@@ -21,17 +21,17 @@ def _packet_to_dict(pkt) -> dict | None:
 
     return {
         "timestamp": float(pkt.time),
-        "src_ip":    ip.src if ip else "0.0.0.0",
-        "dst_ip":    ip.dst if ip else "0.0.0.0",
-        "src_port":  int(tcp.sport),
-        "dst_port":  int(tcp.dport),
-        "protocol":  "TCP",
-        "size":      int(len(pkt)),
-        "flags":     str(tcp.flags),
+        "src_ip": ip.src if ip else "0.0.0.0",
+        "dst_ip": ip.dst if ip else "0.0.0.0",
+        "src_port": int(tcp.sport),
+        "dst_port": int(tcp.dport),
+        "protocol": "TCP",
+        "size": len(pkt),
+        "flags": str(tcp.flags),
         "window_size": int(tcp.window),
-        "seq":       int(tcp.seq),
-        "ack":       int(tcp.ack),
-        "tcp_layer": "Transport",          # OSI layer for TCP
+        "seq": int(tcp.seq),
+        "ack": int(tcp.ack),
+        "tcp_layer": "Transport",  # OSI layer for TCP
     }
 
 
@@ -78,5 +78,5 @@ async def read_pcap(filepath: str, packet_queue: asyncio.Queue):
         d = _packet_to_dict(pkt)
         if d is not None:
             await packet_queue.put(d)
-    # Sentinel – tells consumer we're done
+    # Sentinel - tells consumer we're done
     await packet_queue.put(None)

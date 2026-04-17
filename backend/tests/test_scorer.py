@@ -88,5 +88,5 @@ def test_score_capped_at_100():
         "burst_count": 180,
         "retransmit_count": 50,
     }
-    score, reasons = compute_suspicion(features)
+    score, _reasons = compute_suspicion(features)
     assert score == 100

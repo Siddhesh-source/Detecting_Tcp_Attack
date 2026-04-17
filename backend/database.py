@@ -1,5 +1,5 @@
 """
-Database layer – async SQLite via aiosqlite.
+Database layer - async SQLite via aiosqlite.
 
 Single table: flows
 Provides: init_db, insert_flow, get_all_flows, get_alerts, get_layer_stats,
@@ -60,19 +60,43 @@ CREATE TABLE IF NOT EXISTS flows (
 """
 
 FLOW_COLUMNS = [
-    "flow_id", "src_ip", "dst_ip", "src_port", "dst_port", "protocol",
-    "start_time", "end_time", "duration",
-    "total_packets", "total_bytes",
-    "mean_pkt_size", "std_pkt_size", "min_pkt_size", "max_pkt_size",
-    "packets_per_sec", "bytes_per_sec",
-    "mean_iat", "std_iat", "min_iat", "max_iat",
+    "flow_id",
+    "src_ip",
+    "dst_ip",
+    "src_port",
+    "dst_port",
+    "protocol",
+    "start_time",
+    "end_time",
+    "duration",
+    "total_packets",
+    "total_bytes",
+    "mean_pkt_size",
+    "std_pkt_size",
+    "min_pkt_size",
+    "max_pkt_size",
+    "packets_per_sec",
+    "bytes_per_sec",
+    "mean_iat",
+    "std_iat",
+    "min_iat",
+    "max_iat",
     "burst_count",
-    "syn_count", "ack_count", "fin_count", "rst_count",
-    "retransmit_count", "avg_window_size",
-    "fwd_packets", "bwd_packets", "fwd_bwd_ratio",
+    "syn_count",
+    "ack_count",
+    "fin_count",
+    "rst_count",
+    "retransmit_count",
+    "avg_window_size",
+    "fwd_packets",
+    "bwd_packets",
+    "fwd_bwd_ratio",
     "tcp_layer",
-    "suspicion_score", "alert_reasons", "is_anomaly",
-    "true_label", "predicted_label",
+    "suspicion_score",
+    "alert_reasons",
+    "is_anomaly",
+    "true_label",
+    "predicted_label",
     "created_at",
 ]
 
@@ -102,9 +126,7 @@ async def get_all_flows(limit: int = 100) -> list[dict]:
     """Return the most recent *limit* flows as dicts."""
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
-        cursor = await db.execute(
-            "SELECT * FROM flows ORDER BY created_at DESC LIMIT ?", (limit,)
-        )
+        cursor = await db.execute("SELECT * FROM flows ORDER BY created_at DESC LIMIT ?", (limit,))
         rows = await cursor.fetchall()
         return [dict(r) for r in rows]
 
@@ -129,8 +151,7 @@ async def get_layer_stats() -> dict:
     """
     async with aiosqlite.connect(DB_PATH) as db:
         cursor = await db.execute(
-            "SELECT tcp_layer, COUNT(*) as cnt FROM flows "
-            "WHERE is_anomaly = 1 GROUP BY tcp_layer"
+            "SELECT tcp_layer, COUNT(*) as cnt FROM flows WHERE is_anomaly = 1 GROUP BY tcp_layer",
         )
         rows = await cursor.fetchall()
         return {row[0]: row[1] for row in rows}
@@ -159,7 +180,7 @@ async def get_stats() -> dict:
         cur = await db.execute(
             "SELECT src_ip, COUNT(*) as cnt FROM flows "
             "WHERE is_anomaly = 1 "
-            "GROUP BY src_ip ORDER BY cnt DESC LIMIT 5"
+            "GROUP BY src_ip ORDER BY cnt DESC LIMIT 5",
         )
         top_ips_rows = await cur.fetchall()
         top_suspicious_ips = [row[0] for row in top_ips_rows]
