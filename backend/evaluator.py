@@ -12,6 +12,7 @@ Provides:
 from __future__ import annotations
 import json
 import os
+
 import numpy as np
 import pandas as pd
 from imblearn.over_sampling import SMOTE
@@ -27,6 +28,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
+
 from feature_extractor import FEATURE_LAYER_MAP
 from ml_model import CIC_TO_OUR, FEATURE_COLS, FlowDetector
 
