@@ -22,6 +22,15 @@ backend = [
     "aiosqlite",
     "python-multipart",
     "joblib",
+    "shap",
+    "matplotlib",
+    "dnspython",
+    "pyasn",
+    "geoip2",
+    "aiosmtplib",
+    "redis",
+    "networkx",
+    "python-louvain",
 ]
 dev = [
     "pytest",

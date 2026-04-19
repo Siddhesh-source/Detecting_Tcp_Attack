@@ -1,0 +1,262 @@
+.behavioral-baseline {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.baseline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.baseline-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #00d4ff;
+  font-size: 24px;
+  margin: 0;
+}
+
+.baseline-status {
+  display: flex;
+  gap: 10px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-badge.established {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.status-badge.learning {
+  background: rgba(255, 193, 7, 0.2);
+  color: #FFC107;
+}
+
+.baseline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.baseline-card {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.baseline-card h3 {
+  color: #00d4ff;
+  font-size: 18px;
+  margin: 0 0 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.baseline-card h4 {
+  color: #888;
+  font-size: 14px;
+  margin: 20px 0 10px 0;
+  text-transform: uppercase;
+}
+
+.stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  color: #888;
+  font-size: 14px;
+}
+
+.stat-value {
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #00ff88);
+  transition: width 0.5s ease;
+}
+
+.ip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ip-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ip-item:hover {
+  background: rgba(0, 212, 255, 0.1);
+  transform: translateX(5px);
+}
+
+.ip-rank {
+  font-size: 16px;
+  font-weight: bold;
+  color: #00d4ff;
+  min-width: 30px;
+}
+
+.ip-address {
+  flex: 1;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.ip-count {
+  color: #888;
+  font-size: 12px;
+}
+
+.profile-detail {
+  grid-column: span 2;
+}
+
+.profile-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.metric-row span {
+  color: #888;
+}
+
+.metric-row strong {
+  color: #fff;
+}
+
+.protocol-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.protocol-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.protocol-bar span:first-child {
+  min-width: 60px;
+  color: #888;
+  font-size: 12px;
+}
+
+.protocol-bar .bar {
+  flex: 1;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.protocol-bar .bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #00ff88);
+  transition: width 0.5s ease;
+}
+
+.protocol-bar span:last-child {
+  min-width: 40px;
+  text-align: right;
+  color: #fff;
+  font-size: 12px;
+}
+
+.port-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.port-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.port-number {
+  color: #00d4ff;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.port-count {
+  color: #888;
+  font-size: 12px;
+}
+
+.circadian-chart {
+  grid-column: span 2;
+  min-height: 300px;
+}
+
+.circadian-chart canvas {
+  max-height: 250px;
+}

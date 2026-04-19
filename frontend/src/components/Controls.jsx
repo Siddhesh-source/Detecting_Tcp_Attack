@@ -3,8 +3,19 @@ import axios from 'axios';
 const API = 'http://localhost:8000';
 
 export default function Controls({ threshold, onThresholdChange, onRefresh, onRefreshMetrics, onStartCapture, onStopCapture, capturing, flaggingPct }) {
-  const [interface_, setInterface_] = React.useState('eth0');
+  const [interface_, setInterface_] = React.useState('');
+  const [interfaces, setInterfaces] = React.useState([]);
   const fileRef = useRef();
+
+  React.useEffect(() => {
+    axios.get(`${API}/capture/interfaces`).then(r => {
+      const ifaces = r.data.interfaces || [];
+      setInterfaces(ifaces);
+      // Auto-select first interface with valid IP
+      const active = ifaces.find(i => i.ip && i.ip !== 'No IP' && i.ip !== '127.0.0.1');
+      if (active) setInterface_(active.name);
+    }).catch(() => {});
+  }, []);
 
   const uploadPcap = async () => { const file = fileRef.current.files[0]; if (!file) return; const form = new FormData(); form.append('file', file); try { await axios.post(`${API}/upload/pcap`, form); onRefresh(); } catch (e) { console.error(e); } };
 
@@ -18,8 +29,13 @@ export default function Controls({ threshold, onThresholdChange, onRefresh, onRe
       <div className="controls-sep" />
       {!capturing ? (
         <>
-          <input value={interface_} onChange={e => setInterface_(e.target.value)} placeholder="eth0" className="interface-input" />
-          <button className="btn btn-primary" onClick={() => onStartCapture(interface_)}>▶ Capture</button>
+          <select value={interface_} onChange={e => setInterface_(e.target.value)} className="interface-input">
+            <option value="">Select interface...</option>
+            {interfaces.map(i => (
+              <option key={i.name} value={i.name}>{i.ip !== 'No IP' ? `${i.ip}` : i.name.slice(-20)}</option>
+            ))}
+          </select>
+          <button className="btn btn-primary" onClick={() => onStartCapture(interface_)} disabled={!interface_}>▶ Capture</button>
         </>
       ) : (
         <button className="btn btn-danger" onClick={onStopCapture}>■ Stop</button>

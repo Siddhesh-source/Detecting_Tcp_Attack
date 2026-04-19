@@ -8,8 +8,7 @@
 
 ### ⚠️ Class Imbalance Warning
 
-The test set contains only **7 attack samples** out of 50558 total
-(0.01%). This means:
+The test set contains only **7 attack samples** out of 50558 total (0.01%). This means:
 
 - **Accuracy is misleading**: predicting BENIGN for everything gives 99.99% accuracy
 - **Precision is inflated**: with so few attacks, false positives are unlikely by chance
@@ -32,17 +31,6 @@ The test set contains only **7 attack samples** out of 50558 total
 |---|---|---|
 | Actual BENIGN | 49571 | 980 |
 | Actual ATTACK | 1 | 6 |
-
-### Stratified 5-Fold Cross-Validation (More Reliable)
-
-Attack detection rate across all folds: **77.8%** (28/36 attacks)
-
-| Metric | Mean | Std Dev |
-|--------|------|---------|
-| Precision | 0.0155 | ±0.0048 |
-| Recall | 0.7786 | ±0.0655 |
-| F1 Score | 0.0304 | ±0.0092 |
-| ROC-AUC | 0.9436 | ±0.0667 |
 
 ### Feature Importance (Top 5)
 

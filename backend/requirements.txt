@@ -9,3 +9,11 @@ websockets
 aiosqlite
 python-multipart
 joblib
+shap
+matplotlib
+dnspython
+geoip2
+aiosmtplib
+redis
+networkx
+python-louvain

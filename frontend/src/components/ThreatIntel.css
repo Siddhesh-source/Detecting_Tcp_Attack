@@ -1,0 +1,232 @@
+.threat-intel {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.threat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.threat-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #00d4ff;
+  font-size: 24px;
+  margin: 0;
+}
+
+.threat-stats {
+  display: flex;
+  gap: 15px;
+}
+
+.threat-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.ip-lookup-panel, .threat-summary {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.ip-lookup-panel h3, .threat-summary h3 {
+  color: #00d4ff;
+  font-size: 18px;
+  margin: 0 0 15px 0;
+}
+
+.ip-selector select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  margin-bottom: 20px;
+}
+
+.reputation-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.reputation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.ip-display {
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.threat-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.threat-badge.malicious {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+}
+
+.threat-badge.clean {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.reputation-score {
+  margin-bottom: 20px;
+}
+
+.score-label {
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.score-value {
+  color: #fff;
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.score-bar {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+.score-fill.high {
+  background: linear-gradient(90deg, #ff4444, #ff0000);
+}
+
+.score-fill.low {
+  background: linear-gradient(90deg, #4CAF50, #2E7D32);
+}
+
+.threat-types, .threat-sources {
+  margin-top: 20px;
+}
+
+.section-label {
+  color: #888;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.threat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.threat-tag {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.source-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.threat-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid #ff4444;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timeline-item:hover {
+  background: rgba(255, 68, 68, 0.1);
+  transform: translateX(5px);
+}
+
+.timeline-time {
+  color: #888;
+  font-size: 12px;
+  min-width: 80px;
+}
+
+.timeline-content {
+  flex: 1;
+}
+
+.timeline-ip {
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.timeline-score {
+  color: #ff4444;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.threat-loading, .threat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #666;
+  font-size: 16px;
+  gap: 10px;
+}

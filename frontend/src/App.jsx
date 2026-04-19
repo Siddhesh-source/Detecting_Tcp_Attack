@@ -1,18 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import GlobalStatus from './components/GlobalStatus';
-import AlertSummary from './components/AlertSummary';
-import AnalyticsSection from './components/AnalyticsSection';
+import Sidebar from './components/Sidebar';
+import DashboardView from './components/DashboardView';
+import AlertsView from './components/AlertsView';
+import NetworkTopology from './components/NetworkTopology';
+import ShapExplainer from './components/ShapExplainer';
+import BehavioralBaseline from './components/BehavioralBaseline';
+import ThreatIntel from './components/ThreatIntel';
 import FlowTable from './components/FlowTable';
 import FlowDetailPanel from './components/FlowDetailPanel';
-import Controls from './components/Controls';
-import StoryBanner from './components/StoryBanner';
-import ImbalanceBanner from './components/ImbalanceBanner';
 import './App.css';
 
 const API = 'http://localhost:8000';
 
 export default function App() {
+  const [activeView, setActiveView] = useState('dashboard');
   const [flows, setFlows] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [stats, setStats] = useState({});
@@ -111,70 +113,62 @@ export default function App() {
     return 'LOW';
   }, [alerts.length]);
 
+  const renderView = () => {
+    const commonProps = {
+      flows, alerts, stats, metrics, featureImportance, layerStats,
+      connected, capturing, captureIface, threshold, setThreshold: setThreshold,
+      lastUpdate, stories, scoreHistory: scoreHistoryRef.current,
+      flowAnalytics, threatLevel, onRefresh: refreshAll,
+      onRefreshMetrics: refreshMetrics,
+      onStartCapture: async (iface) => {
+        await axios.post(`${API}/capture/start`, { interface: iface });
+        setCapturing(true);
+        setCaptureIface(iface);
+      },
+      onStopCapture: async () => {
+        await axios.post(`${API}/capture/stop`);
+        setCapturing(false);
+        setCaptureIface('');
+      },
+      onSelectFlow: setSelectedFlow
+    };
+
+    switch (activeView) {
+      case 'dashboard':
+        return <DashboardView {...commonProps} />;
+      case 'alerts':
+        return <AlertsView {...commonProps} />;
+      case 'topology':
+        return <NetworkTopology />;
+      case 'explainability':
+        return <ShapExplainer flows={flows} />;
+      case 'baseline':
+        return <BehavioralBaseline />;
+      case 'threat-intel':
+        return <ThreatIntel flows={flows} />;
+      case 'flows':
+        return <FlowTable flows={flows} onSelect={setSelectedFlow} selectedFlowId={selectedFlow?.flow_id} />;
+      default:
+        return <DashboardView {...commonProps} />;
+    }
+  };
+
   return (
-    <div className={`app ${selectedFlow ? 'app--inspecting' : ''}`}>
-      {/* ═══ LAYER 1: GLOBAL STATUS ═══ */}
-      <GlobalStatus
-        connected={connected}
-        threatLevel={threatLevel}
+    <>
+      <Sidebar
+        activeView={activeView}
+        onViewChange={setActiveView}
         alertCount={alerts.length}
-        capturing={capturing}
-        captureIface={captureIface}
-        lastUpdate={lastUpdate}
+        connected={connected}
       />
-
-      {/* ═══ STORY BANNER ═══ */}
-      <StoryBanner stories={stories} />
-
-      {/* ═══ IMBALANCE WARNING ═══ */}
-      <ImbalanceBanner metrics={metrics} />
-
-      {/* ═══ LAYER 2: ALERTS + SUMMARY ═══ */}
-      <section className="layer layer--decision">
-        <AlertSummary
-          alerts={alerts}
-          stats={stats}
-          metrics={metrics}
-          featureImportance={featureImportance}
-          layerStats={layerStats}
-          onSelectFlow={setSelectedFlow}
-        />
-      </section>
-
-      {/* ═══ CONTROLS ═══ */}
-      <Controls
-        threshold={threshold}
-        onThresholdChange={setThreshold}
-        onRefresh={refreshAll}
-        onRefreshMetrics={refreshMetrics}
-        onStartCapture={async (iface) => { await axios.post(`${API}/capture/start`, { interface: iface }); setCapturing(true); setCaptureIface(iface); }}
-        onStopCapture={async () => { await axios.post(`${API}/capture/stop`); setCapturing(false); setCaptureIface(''); }}
-        capturing={capturing}
-        flaggingPct={flows.length ? ((alerts.length / flows.length) * 100).toFixed(1) : '0.0'}
-      />
-
-      {/* ═══ LAYER 3: ANALYTICS ═══ */}
-      <section className="layer layer--analytics">
-        <AnalyticsSection
-          flows={flows}
-          layerStats={layerStats}
-          flowAnalytics={flowAnalytics}
-          featureImportance={featureImportance}
-          scoreHistory={scoreHistoryRef.current}
-          threshold={threshold}
-          metrics={metrics}
-        />
-      </section>
-
-      {/* ═══ LAYER 4: FLOW TABLE ═══ */}
-      <section className="layer layer--deepdive">
-        <FlowTable flows={flows} onSelect={setSelectedFlow} selectedFlowId={selectedFlow?.flow_id} />
-      </section>
-
-      {/* ═══ DETAIL PANEL (slides in from right) ═══ */}
+      <div className="app-with-sidebar">
+        <div className="main-content">
+          {renderView()}
+        </div>
+      </div>
       {selectedFlow && (
         <FlowDetailPanel flow={selectedFlow} onClose={() => setSelectedFlow(null)} />
       )}
-    </div>
+    </>
   );
 }

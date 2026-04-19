@@ -1,0 +1,210 @@
+.alerts-view { width: 100%; }
+
+.alerts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.alerts-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #ff4444;
+  font-size: 24px;
+}
+
+.alerts-title h2 { margin: 0; font-size: 24px; }
+
+.alert-count {
+  background: #ff4444;
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,212,255,0.1);
+  border: 1px solid rgba(0,212,255,0.3);
+  color: #00d4ff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover { background: rgba(0,212,255,0.2); }
+
+.alerts-controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  background: rgba(0,0,0,0.3);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  color: #888;
+}
+
+.filter-input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.filter-input:focus { border-color: #00d4ff; }
+
+.sort-group, .threshold-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #888;
+  font-size: 14px;
+}
+
+.sort-select {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.threshold-slider { width: 120px; cursor: pointer; }
+
+.severity-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.severity-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.severity-chip.critical { background: rgba(255,0,0,0.15); color: #ff0000; border: 1px solid rgba(255,0,0,0.3); }
+.severity-chip.high { background: rgba(255,100,0,0.15); color: #ff6400; border: 1px solid rgba(255,100,0,0.3); }
+.severity-chip.medium { background: rgba(255,200,0,0.15); color: #ffc800; border: 1px solid rgba(255,200,0,0.3); }
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alerts-empty {
+  text-align: center;
+  padding: 60px;
+  color: #5c6284;
+  font-size: 16px;
+}
+
+.alert-card {
+  display: flex;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.alert-card:hover { transform: translateX(4px); border-color: rgba(0,212,255,0.2); }
+
+.alert-severity-bar { width: 4px; flex-shrink: 0; }
+.alert-card.critical .alert-severity-bar { background: #ff0000; }
+.alert-card.high .alert-severity-bar { background: #ff6400; }
+.alert-card.medium .alert-severity-bar { background: #ffc800; }
+
+.alert-body { flex: 1; padding: 15px; }
+
+.alert-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.alert-flow { display: flex; align-items: center; gap: 8px; }
+
+.alert-ip {
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.alert-arrow { color: #5c6284; }
+
+.alert-proto {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.alert-proto.tcp { background: rgba(68,136,255,0.2); color: #4488ff; }
+.alert-proto.udp { background: rgba(170,68,255,0.2); color: #aa44ff; }
+.alert-proto.icmp { background: rgba(255,136,0,0.2); color: #ff8800; }
+.alert-proto.dns { background: rgba(0,255,136,0.2); color: #00ff88; }
+
+.alert-score {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ff4444;
+  font-family: 'Courier New', monospace;
+}
+
+.alert-reasons {
+  color: #8a8fa8;
+  font-size: 12px;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.alert-meta {
+  display: flex;
+  gap: 16px;
+  color: #5c6284;
+  font-size: 12px;
+  align-items: center;
+}
+
+.sev-badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.sev-badge.critical { background: rgba(255,0,0,0.2); color: #ff0000; }
+.sev-badge.high { background: rgba(255,100,0,0.2); color: #ff6400; }
+.sev-badge.medium { background: rgba(255,200,0,0.2); color: #ffc800; }

@@ -1,0 +1,267 @@
+.shap-explainer {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.shap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.shap-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #00d4ff;
+  font-size: 24px;
+  margin: 0;
+}
+
+.shap-tabs {
+  display: flex;
+  gap: 10px;
+}
+
+.shap-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: #888;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.shap-tab.active {
+  background: #00d4ff;
+  color: #000;
+}
+
+.shap-content {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.flow-selector {
+  margin-bottom: 20px;
+}
+
+.flow-selector select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+}
+
+.shap-waterfall {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.waterfall-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid transparent;
+}
+
+.waterfall-item.positive {
+  border-left-color: #ff4444;
+}
+
+.waterfall-item.negative {
+  border-left-color: #4CAF50;
+}
+
+.feature-name {
+  min-width: 150px;
+  color: #00d4ff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.feature-value {
+  min-width: 100px;
+  color: #888;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.shap-bar-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shap-bar {
+  flex: 1;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.shap-bar-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.shap-bar-fill.positive {
+  background: linear-gradient(90deg, rgba(255, 68, 68, 0.3), #ff4444);
+}
+
+.shap-bar-fill.negative {
+  background: linear-gradient(90deg, rgba(76, 175, 80, 0.3), #4CAF50);
+}
+
+.shap-value {
+  min-width: 80px;
+  text-align: right;
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.shap-value.positive {
+  color: #ff4444;
+}
+
+.shap-value.negative {
+  color: #4CAF50;
+}
+
+.prediction-summary {
+  background: rgba(0, 212, 255, 0.1);
+  border: 2px solid #00d4ff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.prediction-summary h3 {
+  color: #00d4ff;
+  margin: 0 0 15px 0;
+  font-size: 18px;
+}
+
+.prediction-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.prediction-metric {
+  text-align: center;
+}
+
+.prediction-metric .label {
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.prediction-metric .value {
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.prediction-metric .value.attack {
+  color: #ff4444;
+}
+
+.prediction-metric .value.benign {
+  color: #4CAF50;
+}
+
+.global-importance {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.importance-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.importance-rank {
+  font-size: 18px;
+  font-weight: bold;
+  color: #00d4ff;
+  min-width: 30px;
+}
+
+.importance-feature {
+  flex: 1;
+  color: #fff;
+  font-size: 14px;
+}
+
+.importance-bar {
+  flex: 2;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.importance-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #00ff88);
+  transition: width 0.5s ease;
+}
+
+.importance-score {
+  min-width: 60px;
+  text-align: right;
+  color: #00d4ff;
+  font-weight: bold;
+}
+
+.shap-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #888;
+  font-size: 16px;
+}
+
+.shap-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #666;
+  font-size: 16px;
+  gap: 10px;
+}
