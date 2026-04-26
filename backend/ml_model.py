@@ -28,53 +28,85 @@ from sklearn.preprocessing import StandardScaler
 # Feature columns the model operates on
 # ---------------------------------------------------------------------------
 FEATURE_COLS = [
-    "duration",
-    "total_packets",
-    "total_bytes",
-    "mean_pkt_size",
-    "std_pkt_size",
-    "packets_per_sec",
-    "bytes_per_sec",
-    "mean_iat",
-    "std_iat",
-    "burst_count",
-    "syn_count",
-    "ack_count",
-    "fin_count",
-    "rst_count",
-    "retransmit_count",
-    "avg_window_size",
-    "fwd_bwd_ratio",
+    "duration",          # Flow Duration
+    "total_packets",     # derived: fwd_packets + bwd_packets
+    "total_bytes",       # derived: fwd_bytes + bwd_bytes
+    "mean_pkt_size",     # Average Packet Size
+    "std_pkt_size",      # Fwd Packet Length Std
+    "pkt_len_std",       # Packet Length Std (overall bidirectional)
+    "packets_per_sec",   # Flow Packets/s
+    "bytes_per_sec",     # Flow Bytes/s
+    "mean_iat",          # Flow IAT Mean
+    "std_iat",           # Flow IAT Std
+    "fwd_iat_total",     # Fwd IAT Total
+    "bwd_iat_total",     # Bwd IAT Total
+    "bwd_iat_mean",      # Bwd IAT Mean
+    "bwd_iat_std",       # Bwd IAT Std
+    "burst_count",       # PSH Flag Count (proxy for burst activity)
+    "syn_count",         # SYN Flag Count
+    "ack_count",         # ACK Flag Count
+    "fin_count",         # FIN Flag Count
+    "rst_count",         # RST Flag Count
+    "retransmit_count",  # 0 during training; real value during live inference
+    "avg_window_size",   # Init_Win_bytes_forward
+    "fwd_bwd_ratio",     # derived: fwd_packets / bwd_packets
+    "active_mean",       # Active Mean (activity burst duration)
+    "idle_mean",         # Idle Mean (idle period duration)
 ]
 
 # ---------------------------------------------------------------------------
 # Column name mapping: CIC-IDS2017 CSV columns → our FEATURE_COLS names
 # ---------------------------------------------------------------------------
 CIC_TO_OUR = {
-    "Destination Port": "dst_port",
-    "Flow Duration": "duration",
-    "Total Fwd Packets": "fwd_packets",
-    "Total Backward Packets": "bwd_packets",
-    "Fwd Packet Length Mean": "mean_pkt_size",
-    "Fwd Packet Length Std": "std_pkt_size",
-    "Bwd Packet Length Mean": "bwd_pkt_mean",
-    "Flow Bytes/s": "bytes_per_sec",
-    "Flow Packets/s": "packets_per_sec",
-    "Flow IAT Mean": "mean_iat",
-    "Flow IAT Std": "std_iat",
-    "Flow IAT Max": "max_iat",
-    "Flow IAT Min": "min_iat",
-    "Fwd IAT Mean": "fwd_iat_mean",
-    "Fwd IAT Std": "fwd_iat_std",
-    "Fwd IAT Max": "fwd_iat_max",
-    "Fwd IAT Min": "fwd_iat_min",
-    "FIN Flag Count": "fin_count",
-    "SYN Flag Count": "syn_count",
-    "RST Flag Count": "rst_count",
-    "ACK Flag Count": "ack_count",
-    "Average Packet Size": "mean_pkt_size",
-    "Init_Win_bytes_forward": "avg_window_size",
-    "Init_Win_bytes_backward": "init_win_bwd",
+    # --- Identity / metadata ---
+    "Destination Port":              "dst_port",
+    # --- Flow timing ---
+    "Flow Duration":                 "duration",
+    # --- Packet counts ---
+    "Total Fwd Packets":             "fwd_packets",
+    "Total Backward Packets":        "bwd_packets",
+    # --- Byte volumes ---
+    "Total Length of Fwd Packets":   "fwd_bytes",
+    "Total Length of Bwd Packets":   "bwd_bytes",
+    # --- Packet size ---
+    # NOTE: 'Average Packet Size' is the overall bidirectional mean.
+    # 'Fwd Packet Length Mean' is forward-only.  Both previously mapped
+    # to mean_pkt_size (duplicate bug — last one won).  We now keep only
+    # the overall mean which matches what live inference computes.
+    "Average Packet Size":           "mean_pkt_size",
+    "Fwd Packet Length Std":         "std_pkt_size",
+    "Packet Length Std":             "pkt_len_std",
+    # --- Flow rates ---
+    "Flow Bytes/s":                  "bytes_per_sec",
+    "Flow Packets/s":                "packets_per_sec",
+    # --- Inter-arrival times (bidirectional) ---
+    "Flow IAT Mean":                 "mean_iat",
+    "Flow IAT Std":                  "std_iat",
+    "Flow IAT Max":                  "max_iat",
+    "Flow IAT Min":                  "min_iat",
+    # --- Inter-arrival times (directional) ---
+    "Fwd IAT Total":                 "fwd_iat_total",
+    "Fwd IAT Mean":                  "fwd_iat_mean",
+    "Fwd IAT Std":                   "fwd_iat_std",
+    "Fwd IAT Max":                   "fwd_iat_max",
+    "Fwd IAT Min":                   "fwd_iat_min",
+    "Bwd IAT Total":                 "bwd_iat_total",
+    "Bwd IAT Mean":                  "bwd_iat_mean",
+    "Bwd IAT Std":                   "bwd_iat_std",
+    # --- TCP flags ---
+    "FIN Flag Count":                "fin_count",
+    "SYN Flag Count":                "syn_count",
+    "RST Flag Count":                "rst_count",
+    "ACK Flag Count":                "ack_count",
+    # PSH flag is the best available proxy for burst_count in the dataset
+    # (dataset has no per-packet timestamps to compute real bursts)
+    "PSH Flag Count":                "burst_count",
+    # --- Window size ---
+    "Init_Win_bytes_forward":        "avg_window_size",
+    "Init_Win_bytes_backward":       "init_win_bwd",
+    # --- Active / idle periods ---
+    "Active Mean":                   "active_mean",
+    "Idle Mean":                     "idle_mean",
 }
 
 # ---------------------------------------------------------------------------
@@ -131,6 +163,16 @@ class FlowDetector:
         rename = {cic: our for cic, our in CIC_TO_OUR.items() if cic in df.columns}
         df = df.rename(columns=rename)
 
+        # Derive total_packets from fwd + bwd counts
+        if "total_packets" not in df.columns and "fwd_packets" in df.columns:
+            df["total_packets"] = df["fwd_packets"] + df["bwd_packets"].fillna(0)
+
+        # Derive total_bytes from fwd + bwd byte volumes
+        if "total_bytes" not in df.columns:
+            fwd_b = df.get("fwd_bytes", pd.Series(0.0, index=df.index))
+            bwd_b = df.get("bwd_bytes", pd.Series(0.0, index=df.index))
+            df["total_bytes"] = fwd_b + bwd_b
+
         # Derive fwd_bwd_ratio if not present
         if "fwd_bwd_ratio" not in df.columns and "fwd_packets" in df.columns:
             bwd = df["bwd_packets"].replace(0, 1)
@@ -140,6 +182,17 @@ class FlowDetector:
         for col in FEATURE_COLS:
             if col not in df.columns:
                 df[col] = 0.0
+
+        # Clamp -1 sentinel values: CIC-IDS2017 uses -1 for Init_Win_bytes_*
+        # when the window size was not observed.  Replace with 0 (unknown).
+        if "avg_window_size" in df.columns:
+            df["avg_window_size"] = df["avg_window_size"].clip(lower=0)
+
+        # Guard: replace any remaining negatives in numeric cols with 0
+        # (duration / rate fields occasionally have -1 on zero-duration flows)
+        for col in ["duration", "packets_per_sec", "bytes_per_sec", "mean_iat"]:
+            if col in df.columns:
+                df[col] = df[col].clip(lower=0)
 
         X = df[FEATURE_COLS].fillna(0).values.astype(float)
         X = np.where(np.isfinite(X), X, 0.0)

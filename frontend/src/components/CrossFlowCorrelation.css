@@ -1,0 +1,209 @@
+.cross-flow-correlation {
+  padding: 20px;
+  background: #0f172a;
+  min-height: 100vh;
+}
+
+.correlation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.correlation-header h2 {
+  color: #f1f5f9;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.correlation-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.correlation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.correlation-card {
+  background: #1e293b;
+  border-radius: 16px;
+  padding: 25px;
+  border: 1px solid #334155;
+}
+
+.correlation-card h3 {
+  color: #f1f5f9;
+  font-size: 18px;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.chart-description {
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+.scatter-plot {
+  grid-column: 1 / -1;
+}
+
+.coordinated-attacks {
+  grid-column: 1;
+}
+
+.correlation-table {
+  grid-column: 2;
+}
+
+.attack-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.attack-item {
+  background: #0f172a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border-left: 3px solid #ef4444;
+}
+
+.attack-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.attack-badge {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.attack-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.detail-row .label {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.detail-row .value {
+  color: #cbd5e1;
+  font-family: 'Courier New', monospace;
+}
+
+.detail-row .value.score {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.custom-tooltip {
+  background: #1e293b;
+  border: 1px solid #334155;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.custom-tooltip p {
+  color: #cbd5e1;
+  font-size: 12px;
+  margin: 4px 0;
+}
+
+.custom-tooltip strong {
+  color: #f1f5f9;
+}
+
+.flow-ids {
+  font-family: 'Courier New', monospace;
+  color: #60a5fa;
+  font-size: 12px;
+}
+
+.type-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.type-badge.multi_protocol {
+  background: #ef4444;
+  color: white;
+}
+
+.type-badge.same_protocol {
+  background: #3b82f6;
+  color: white;
+}
+
+.progress-bar {
+  position: relative;
+  width: 100px;
+  height: 20px;
+  background: #0f172a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  position: absolute;
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+  transition: width 0.3s ease;
+}
+
+.progress-bar span {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  line-height: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  z-index: 1;
+}
+
+.score-cell {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+tr.selected {
+  background: #334155;
+}
+
+tr:hover {
+  background: #1e293b;
+  cursor: pointer;
+}
+
+.correlation-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #94a3b8;
+  font-size: 18px;
+}

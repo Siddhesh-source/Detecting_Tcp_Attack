@@ -15,6 +15,19 @@
   font-size: 24px;
 }
 
+.live-indicator {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 600;
+  animation: pulse 2s ease-in-out infinite;
+  margin-left: 8px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .alerts-title h2 { margin: 0; font-size: 24px; }
 
 .alert-count {
@@ -134,6 +147,27 @@
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid rgba(255,255,255,0.05);
+}
+
+.alert-card.new-alert {
+  animation: slideIn 0.5s ease-out, highlight 3s ease-out;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes highlight {
+  0% { background: rgba(16, 185, 129, 0.15); }
+  100% { background: rgba(0,0,0,0.3); }
 }
 
 .alert-card:hover { transform: translateX(4px); border-color: rgba(0,212,255,0.2); }

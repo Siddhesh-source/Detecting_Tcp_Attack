@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiHome, FiActivity, FiShield, FiCpu, FiLayers, FiDatabase, FiAlertTriangle, FiSettings } from 'react-icons/fi';
+import { FiHome, FiActivity, FiShield, FiCpu, FiLayers, FiDatabase, FiAlertTriangle, FiSettings, FiGitBranch, FiZap, FiLock, FiBarChart2, FiTrendingUp, FiEye, FiUsers } from 'react-icons/fi';
 import './Sidebar.css';
 
 export default function Sidebar({ activeView, onViewChange, alertCount, connected }) {
@@ -12,11 +12,23 @@ export default function Sidebar({ activeView, onViewChange, alertCount, connecte
       ]
     },
     {
+      title: 'NOVEL DETECTORS',
+      items: [
+        { id: 'cwnd', label: 'CWND Fingerprinting', icon: FiCpu },
+        { id: 'cross-flow', label: 'Cross-Flow Correlation', icon: FiGitBranch },
+        { id: 'zero-day', label: 'Zero-Day Detection', icon: FiZap },
+        { id: 'adversarial', label: 'Adversarial Defense', icon: FiLock },
+        { id: 'protocol-agnostic', label: 'Protocol-Agnostic', icon: FiLayers },
+      ]
+    },
+    {
       title: 'ANALYSIS',
       items: [
+        { id: 'performance', label: 'Performance Metrics', icon: FiTrendingUp },
+        { id: 'heatmap', label: 'Alert Heatmap', icon: FiBarChart2 },
         { id: 'topology', label: 'Network Topology', icon: FiActivity },
-        { id: 'explainability', label: 'SHAP Explainability', icon: FiCpu },
-        { id: 'baseline', label: 'Behavioral Baseline', icon: FiLayers },
+        { id: 'explainability', label: 'SHAP Explainability', icon: FiEye },
+        { id: 'baseline', label: 'Behavioral Baseline', icon: FiUsers },
         { id: 'threat-intel', label: 'Threat Intelligence', icon: FiShield }
       ]
     },

@@ -3,6 +3,13 @@ import axios from 'axios';
 import Sidebar from './components/Sidebar';
 import DashboardView from './components/DashboardView';
 import AlertsView from './components/AlertsView';
+import CWNDFingerprinting from './components/CWNDFingerprinting';
+import CrossFlowCorrelation from './components/CrossFlowCorrelation';
+import ZeroDayDetection from './components/ZeroDayDetection';
+import AdversarialRobustness from './components/AdversarialRobustness';
+import ProtocolAgnostic from './components/ProtocolAgnostic';
+import PerformanceMetrics from './components/PerformanceMetrics';
+import AlertHeatmap from './components/AlertHeatmap';
 import NetworkTopology from './components/NetworkTopology';
 import ShapExplainer from './components/ShapExplainer';
 import BehavioralBaseline from './components/BehavioralBaseline';
@@ -31,6 +38,14 @@ export default function App() {
   const wsRef = useRef(null);
   const scoreHistoryRef = useRef([]);
 
+  const addStory = useCallback((flow) => {
+    setStories(prev => [{
+      id: Date.now(),
+      text: `Anomaly detected: ${flow.src_ip} → ${flow.dst_ip}:${flow.dst_port} (score ${flow.suspicion_score?.toFixed(0)})`,
+      time: new Date().toLocaleTimeString(),
+    }, ...prev].slice(0, 5));
+  }, []);
+
   // ---- WebSocket -------------------------------------------------------
   useEffect(() => {
     const connect = () => {
@@ -40,10 +55,24 @@ export default function App() {
       ws.onerror = () => ws.close();
       ws.onmessage = (e) => {
         const flow = JSON.parse(e.data);
+        // Add to flows list
         setFlows(prev => [flow, ...prev].slice(0, 500));
         scoreHistoryRef.current = [...scoreHistoryRef.current.slice(-199), { time: Date.now(), score: flow.suspicion_score || 0 }];
+        
+        // Real-time alert population: add to alerts if score >= threshold
+        if (flow.suspicion_score >= threshold) {
+          setAlerts(prev => {
+            // Avoid duplicates by checking flow_id
+            const exists = prev.some(a => a.flow_id === flow.flow_id);
+            if (!exists) {
+              return [flow, ...prev].slice(0, 200);
+            }
+            return prev;
+          });
+        }
+        
+        // Add story for anomalies
         if (flow.is_anomaly === 1) {
-          setAlerts(prev => [flow, ...prev].slice(0, 200));
           addStory(flow);
         }
         setLastUpdate(Date.now());
@@ -52,15 +81,7 @@ export default function App() {
     };
     connect();
     return () => wsRef.current?.close();
-  }, []);
-
-  const addStory = useCallback((flow) => {
-    setStories(prev => [{
-      id: Date.now(),
-      text: `Anomaly detected: ${flow.src_ip} → ${flow.dst_ip}:${flow.dst_port} (score ${flow.suspicion_score?.toFixed(0)})`,
-      time: new Date().toLocaleTimeString(),
-    }, ...prev].slice(0, 5));
-  }, []);
+  }, [threshold, addStory]);
 
   // ---- Initial fetches -------------------------------------------------
   useEffect(() => {
@@ -80,6 +101,16 @@ export default function App() {
     }, 10000);
     return () => clearInterval(iv);
   }, []);
+
+  // ---- Poll /alerts + /flows every 5 s while capturing ---------------
+  useEffect(() => {
+    if (!capturing) return;
+    const iv = setInterval(() => {
+      axios.get(`${API}/alerts?threshold=${threshold}`).then(r => setAlerts(r.data.alerts || [])).catch(() => {});
+      axios.get(`${API}/flows?limit=200`).then(r => setFlows(r.data.flows || [])).catch(() => {});
+    }, 5000);
+    return () => clearInterval(iv);
+  }, [capturing, threshold]);
 
   useEffect(() => {
     axios.get(`${API}/alerts?threshold=${threshold}`).then(r => setAlerts(r.data.alerts || []));
@@ -116,7 +147,9 @@ export default function App() {
   const renderView = () => {
     const commonProps = {
       flows, alerts, stats, metrics, featureImportance, layerStats,
-      connected, capturing, captureIface, threshold, setThreshold: setThreshold,
+      connected, capturing, captureIface, threshold,
+      setThreshold,
+      onThresholdChange: setThreshold,   // AlertsView uses this prop name
       lastUpdate, stories, scoreHistory: scoreHistoryRef.current,
       flowAnalytics, threatLevel, onRefresh: refreshAll,
       onRefreshMetrics: refreshMetrics,
@@ -138,6 +171,20 @@ export default function App() {
         return <DashboardView {...commonProps} />;
       case 'alerts':
         return <AlertsView {...commonProps} />;
+      case 'cwnd':
+        return <CWNDFingerprinting />;
+      case 'cross-flow':
+        return <CrossFlowCorrelation />;
+      case 'zero-day':
+        return <ZeroDayDetection />;
+      case 'adversarial':
+        return <AdversarialRobustness />;
+      case 'protocol-agnostic':
+        return <ProtocolAgnostic />;
+      case 'performance':
+        return <PerformanceMetrics />;
+      case 'heatmap':
+        return <AlertHeatmap />;
       case 'topology':
         return <NetworkTopology />;
       case 'explainability':

@@ -19,26 +19,26 @@ The test set contains only **7 attack samples** out of 50558 total (0.01%). This
 
 | Metric | Score | Note |
 |--------|-------|------|
-| Accuracy | 98.1% | ⚠️ Misleading — majority class dominates |
-| Precision | 0.6% | ⚠️ Inflated by class imbalance |
-| Recall | 85.7% | ✅ Honest metric |
-| F1 Score | 1.2% | |
-| ROC-AUC | 89.5% | |
+| Accuracy | 98.0% | ⚠️ Misleading — majority class dominates |
+| Precision | 0.5% | ⚠️ Inflated by class imbalance |
+| Recall | 71.4% | ✅ Honest metric |
+| F1 Score | 1.0% | |
+| ROC-AUC | 89.4% | |
 
 ### Confusion Matrix
 
 | | Predicted BENIGN | Predicted ATTACK |
 |---|---|---|
-| Actual BENIGN | 49571 | 980 |
-| Actual ATTACK | 1 | 6 |
+| Actual BENIGN | 49530 | 1021 |
+| Actual ATTACK | 2 | 5 |
 
 ### Feature Importance (Top 5)
 
-- **mean_pkt_size** — importance: 0.216071 (OSI: Derived)
-- **duration** — importance: 0.190317 (OSI: Derived)
-- **fin_count** — importance: 0.134572 (OSI: Transport)
-- **packets_per_sec** — importance: 0.129986 (OSI: Derived)
-- **burst_count** — importance: 0.069130 (OSI: Derived)
+- **bwd_iat_total** — importance: 0.133290 (OSI: Derived)
+- **bwd_iat_mean** — importance: 0.106492 (OSI: Derived)
+- **fwd_iat_total** — importance: 0.100027 (OSI: Derived)
+- **duration** — importance: 0.091788 (OSI: Derived)
+- **ack_count** — importance: 0.077167 (OSI: Transport)
 
 ### Detection Rules Summary
 

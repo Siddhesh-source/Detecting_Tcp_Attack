@@ -1,0 +1,110 @@
+.adversarial-robustness {
+  padding: 20px;
+  background: #0f172a;
+  min-height: 100vh;
+}
+
+.adversarial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.adversarial-header h2 {
+  color: #f1f5f9;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.adversarial-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.adversarial-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.adversarial-card {
+  background: #1e293b;
+  border-radius: 16px;
+  padding: 25px;
+  border: 1px solid #334155;
+}
+
+.adversarial-card h3 {
+  color: #f1f5f9;
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.robustness-chart {
+  grid-column: 1 / -1;
+}
+
+.attack-detections {
+  grid-column: 1;
+}
+
+.sanitization-logs {
+  grid-column: 2;
+}
+
+.detection-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.detection-item {
+  background: #0f172a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border-left: 3px solid #ef4444;
+}
+
+.detection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.detection-badge {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.detection-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sanitization-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #10b981;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.adversarial-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #94a3b8;
+  font-size: 18px;
+}

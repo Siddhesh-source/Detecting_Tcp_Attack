@@ -1,0 +1,121 @@
+.protocol-agnostic {
+  padding: 20px;
+  background: #0f172a;
+  min-height: 100vh;
+}
+
+.protocol-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.protocol-header h2 {
+  color: #f1f5f9;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.protocol-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.protocol-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.protocol-card {
+  background: #1e293b;
+  border-radius: 16px;
+  padding: 25px;
+  border: 1px solid #334155;
+}
+
+.protocol-card h3 {
+  color: #f1f5f9;
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.radar-chart {
+  grid-column: 1;
+}
+
+.similarity-heatmap {
+  grid-column: 2;
+}
+
+.detection-table {
+  grid-column: 1 / -1;
+}
+
+.heatmap-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heatmap-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-label {
+  width: 80px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.heatmap-cell {
+  flex: 1;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.05);
+}
+
+.protocol-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #3b82f6;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.covert-row {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 2px solid #ef4444;
+}
+
+.badge.covert {
+  background: #ef4444;
+  color: white;
+}
+
+.protocol-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #94a3b8;
+  font-size: 18px;
+}

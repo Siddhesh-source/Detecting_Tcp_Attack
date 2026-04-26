@@ -5,9 +5,27 @@ import './AlertsView.css';
 
 const API = 'http://localhost:8000';
 
-export default function AlertsView({ alerts, threshold, onThresholdChange, onSelectFlow }) {
+export default function AlertsView({ alerts, threshold, onThresholdChange, onSelectFlow, connected }) {
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState('score');
+  const [newAlertIds, setNewAlertIds] = useState(new Set());
+
+  // Track new alerts for animation
+  React.useEffect(() => {
+    if (alerts.length > 0) {
+      const latestId = alerts[0]?.flow_id;
+      if (latestId && !newAlertIds.has(latestId)) {
+        setNewAlertIds(prev => new Set([...prev, latestId]));
+        setTimeout(() => {
+          setNewAlertIds(prev => {
+            const next = new Set(prev);
+            next.delete(latestId);
+            return next;
+          });
+        }, 3000);
+      }
+    }
+  }, [alerts]);
 
   const filtered = alerts
     .filter(a => !filter || a.src_ip?.includes(filter) || a.dst_ip?.includes(filter) || a.protocol?.includes(filter.toUpperCase()))
@@ -36,6 +54,7 @@ export default function AlertsView({ alerts, threshold, onThresholdChange, onSel
           <FiAlertTriangle />
           <h2>Alerts</h2>
           <span className="alert-count">{filtered.length}</span>
+          {connected && <span className="live-indicator" title="Live updates active">● LIVE</span>}
         </div>
         <div className="alerts-actions">
           <button className="action-btn" onClick={exportAlerts}>
@@ -90,8 +109,9 @@ export default function AlertsView({ alerts, threshold, onThresholdChange, onSel
         )}
         {filtered.map((alert, idx) => {
           const sev = getSeverity(alert.suspicion_score);
+          const isNew = newAlertIds.has(alert.flow_id);
           return (
-            <div key={alert.flow_id || idx} className={`alert-card ${sev}`} onClick={() => onSelectFlow?.(alert)}>
+            <div key={alert.flow_id || idx} className={`alert-card ${sev} ${isNew ? 'new-alert' : ''}`} onClick={() => onSelectFlow?.(alert)}>
               <div className="alert-severity-bar" />
               <div className="alert-body">
                 <div className="alert-top">

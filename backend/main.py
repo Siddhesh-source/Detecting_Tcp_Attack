@@ -44,6 +44,25 @@ from database import (
     get_stats,
     init_db,
     insert_flow,
+    insert_cwnd_fingerprint,
+    get_cwnd_fingerprints,
+    get_cwnd_algorithm_stats,
+    insert_correlation,
+    insert_coordinated_attack,
+    get_correlations,
+    get_coordinated_attacks,
+    insert_zeroday_detection,
+    get_zeroday_detections,
+    insert_adversarial_metric,
+    insert_sanitization_log,
+    get_adversarial_metrics,
+    get_sanitization_logs,
+    insert_protocol_feature,
+    get_protocol_features,
+    get_alert_heatmap,
+    get_protocol_distribution,
+    get_geo_distribution,
+    get_performance_metrics,
 )
 from evaluator import (
     evaluate_model,
@@ -71,6 +90,14 @@ from network_topology import NetworkTopology
 from protocol_scorer import score_dns_flow, score_icmp_flow, score_udp_flow
 from scorer import compute_suspicion
 from threat_intel import ThreatIntelligence
+
+# C++ Engine Integration
+try:
+    from cpp_detector_wrapper import CWNDDetectorWrapper, QoSDetectorWrapper, CPP_ENGINE_AVAILABLE
+except ImportError:
+    CPP_ENGINE_AVAILABLE = False
+    CWNDDetectorWrapper = None
+    QoSDetectorWrapper = None
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -166,6 +193,15 @@ async def lifespan(app: FastAPI):
     print(f"[Startup] Topology: {len(network_topology.graph.nodes)} nodes, {len(network_topology.graph.edges)} edges")
     print("[Startup] Backend ready")
 
+    # Npcap / Scapy driver probe
+    try:
+        from scapy.arch.windows import get_windows_if_list
+        ifaces = get_windows_if_list()
+        print(f"[Startup] Npcap OK — {len(ifaces)} Windows interfaces detected", flush=True)
+    except Exception as _npcap_err:
+        print(f"[Startup] WARNING: Npcap probe failed: {_npcap_err}", flush=True)
+        print("[Startup] Live capture will not work. Install Npcap from https://npcap.com/", flush=True)
+
     yield
 
 
@@ -183,23 +219,96 @@ app.add_middleware(
 
 
 # ======================================================================
-# BACKGROUND LOOP — drain packet queue → flows → features → score → DB → WS
+# BACKGROUND LOOP — drain packet queue -> flows -> features -> score -> DB -> WS
 # ======================================================================
+async def _flow_flush_ticker():
+    """
+    Every 5 seconds, force-complete any flows that have been idle for >= 5 s.
+    This handles long-lived connections (HTTPS keep-alive, etc.) that never
+    receive a 'stop' packet, so they would otherwise sit in flow_builder.active
+    forever and never appear on the dashboard.
+    """
+    while not stop_event.is_set():
+        await asyncio.sleep(5)
+        completed = flow_builder.get_completed_flows(timeout=5)
+        if completed:
+            print(f"[Ticker] Flushing {len(completed)} idle flow(s)", flush=True)
+            for flow in completed:
+                features = extract_features(flow)
+                protocol = features.get("protocol", "TCP")
+                if protocol == "UDP":
+                    proto_score, proto_reasons = score_udp_flow(features)
+                elif protocol == "ICMP":
+                    proto_score, proto_reasons = score_icmp_flow(features)
+                elif protocol == "DNS":
+                    proto_score, proto_reasons = score_dns_flow(features)
+                else:
+                    proto_score, proto_reasons = 0.0, []
+
+                tcp_score, tcp_reasons = compute_suspicion(features)
+                advanced_results = advanced_detector.analyze_flow(flow.packets)
+                score = max(tcp_score, proto_score, advanced_results["total_score"])
+                reasons = tcp_reasons + proto_reasons + advanced_results["detected_techniques"]
+
+                is_anomaly = score >= 50
+                flow_dict = {
+                    **features,
+                    "suspicion_score": score,
+                    "alert_reasons": "; ".join(reasons),
+                    "is_anomaly": int(is_anomaly),
+                    "predicted_label": "ATTACK" if is_anomaly else "BENIGN",
+                    "true_label": "UNKNOWN",
+                    "created_at": time.time(),
+                }
+                behavioral_baseline.update_profile(flow_dict)
+                anomaly_result = behavioral_baseline.detect_anomaly(flow_dict)
+                if anomaly_result["is_anomaly"]:
+                    flow_dict["suspicion_score"] = min(flow_dict["suspicion_score"] + anomaly_result["anomaly_score"], 100)
+                    flow_dict["alert_reasons"] += f"; {anomaly_result['reason']}"
+                threat_enrichment = threat_intel.enrich_flow(flow_dict)
+                flow_dict.update(threat_enrichment)
+                network_topology.add_flow(flow_dict)
+                await insert_flow(flow_dict)
+                if alert_manager.should_alert(flow_dict):
+                    await alert_manager.send_alert(flow_dict)
+                if flow_dict["suspicion_score"] >= 70:
+                    context_packets = forensic_collector.get_context_packets(flow_dict)
+                    forensic_collector.capture_flow_evidence(flow_dict, context_packets)
+                await _broadcast(flow_dict)
+
+
 async def _process_packets():
     """
     Consume packets from the queue, build flows, extract features,
     score, predict, insert into DB, and broadcast via WebSocket.
     """
+    _pkt_counter = 0
     while True:
         pkt = await packet_queue.get()
         if pkt is None:  # sentinel
+            print(f"[Processor] Sentinel received — stopping. Total packets processed: {_pkt_counter}", flush=True)
             break
+
+        _pkt_counter += 1
+        if _pkt_counter <= 5 or _pkt_counter % 10 == 0:
+            print(
+                f"[Processor] Packet #{_pkt_counter} — "
+                f"{pkt.get('protocol','?')} "
+                f"{pkt.get('src_ip','?')}:{pkt.get('src_port','?')} -> "
+                f"{pkt.get('dst_ip','?')}:{pkt.get('dst_port','?')} "
+                f"size={pkt.get('size','?')}",
+                flush=True,
+            )
 
         # Add to forensic ring buffer
         forensic_collector.add_packet(pkt)
 
         flow_builder.add_packet(pkt)
-        completed = flow_builder.get_completed_flows(timeout=30)
+        # Flush flows idle for >= 5 seconds (reduced from 30s for real-time visibility)
+        completed = flow_builder.get_completed_flows(timeout=5)
+
+        if completed:
+            print(f"[Processor] {len(completed)} flow(s) completed (active flows: {len(flow_builder.active)})", flush=True)
 
         for flow in completed:
             # Extract features
@@ -268,6 +377,13 @@ async def _process_packets():
                 forensic_collector.capture_flow_evidence(flow_dict, context_packets)
 
             # Broadcast to WebSocket
+            print(
+                f"[Processor] Flow stored & broadcast — "
+                f"{flow_dict.get('src_ip')}:{flow_dict.get('src_port')} -> "
+                f"{flow_dict.get('dst_ip')}:{flow_dict.get('dst_port')} "
+                f"score={flow_dict.get('suspicion_score', 0):.1f} label={flow_dict.get('predicted_label')}",
+                flush=True,
+            )
             await _broadcast(flow_dict)
 
 
@@ -388,6 +504,12 @@ async def start_capture(request: Request):
         _background_tasks.add(task)
         task.add_done_callback(_background_tasks.discard)
         print(f"[API] Processing task created")
+
+        # Start periodic flow flusher (handles long-lived/keep-alive connections)
+        ticker = asyncio.create_task(_flow_flush_ticker())
+        _background_tasks.add(ticker)
+        ticker.add_done_callback(_background_tasks.discard)
+        print(f"[API] Flow flush ticker started (5s interval)")
         
         return {"status": "started", "interface": interface, "message": "Capture started successfully"}
     
@@ -414,6 +536,39 @@ async def stop_capture():
             capture_task.cancel()
     
     return {"status": "stopped"}
+
+
+# ----- Capture diagnostic test ----------------------------------------
+@app.get("/capture/test")
+async def test_capture(interface: str = Query(default="")):
+    """
+    Run a 2-second trial sniff on *interface* and report how many packets
+    were seen.  Use this to confirm Npcap + the chosen interface work
+    before starting a full capture session.
+    """
+    if not interface:
+        return {"status": "error", "message": "Pass ?interface=<name>"}
+    try:
+        from scapy.all import AsyncSniffer
+        results = []
+        trial = AsyncSniffer(
+            iface=interface,
+            filter="tcp or udp or icmp",
+            prn=lambda p: results.append(len(p)),
+            store=False,
+        )
+        trial.start()
+        await asyncio.sleep(2)
+        trial.stop()
+        return {
+            "status": "ok",
+            "interface": interface,
+            "packets_seen_in_2s": len(results),
+            "message": "Npcap is working" if results else "No packets seen in 2s — check interface name and traffic",
+        }
+    except Exception as e:
+        return {"status": "error", "interface": interface, "error": str(e),
+                "hint": "Ensure Npcap is installed and you are running as Administrator"}
 
 
 # ----- Get available network interfaces --------------------------------
@@ -694,3 +849,217 @@ async def test_alert():
     }
     await alert_manager.send_alert(test_flow)
     return {"status": "test_alert_sent"}
+
+
+# ----- CWND Fingerprinting Endpoints -----------------------------------
+@app.get("/cpp/cwnd/fingerprints")
+async def get_cwnd_data():
+    """Get CWND fingerprints with algorithm distribution and switching detections."""
+    fingerprints = await get_cwnd_fingerprints(100)
+    algorithm_stats = await get_cwnd_algorithm_stats()
+    
+    # Detect algorithm switching (consecutive fingerprints with different algorithms)
+    switching_detections = []
+    for i in range(len(fingerprints) - 1):
+        curr = fingerprints[i]
+        prev = fingerprints[i + 1]
+        if (curr["flow_id"] == prev["flow_id"] and 
+            curr["algorithm"] != prev["algorithm"]):
+            switching_detections.append({
+                "flow_id": curr["flow_id"],
+                "from_algorithm": prev["algorithm"],
+                "to_algorithm": curr["algorithm"],
+                "timestamp": curr["timestamp"],
+                "confidence": curr["confidence"]
+            })
+    
+    return {
+        "fingerprints": fingerprints,
+        "algorithm_distribution": algorithm_stats,
+        "switching_detections": switching_detections[:20]
+    }
+
+
+@app.get("/cpp/cwnd/algorithm-stats")
+async def get_algorithm_distribution():
+    """Get algorithm distribution statistics."""
+    stats = await get_cwnd_algorithm_stats()
+    return {"algorithm_distribution": stats}
+
+
+# ----- Cross-Flow Correlation Endpoints --------------------------------
+@app.get("/cpp/cross-flow/correlations")
+async def get_cross_flow_data():
+    """Get cross-flow correlations and coordinated attack detections."""
+    correlations = await get_correlations(100)
+    coordinated_attacks = await get_coordinated_attacks(50)
+    
+    return {
+        "correlations": correlations,
+        "coordinated_attacks": coordinated_attacks
+    }
+
+
+# ----- Zero-Day Detection Endpoints ------------------------------------
+@app.get("/cpp/zero-day/detections")
+async def get_zeroday_data():
+    """Get zero-day detection data with anomaly scores and novel patterns."""
+    detections = await get_zeroday_detections(100)
+    
+    novel_patterns = [d for d in detections if d["is_novel_pattern"] == 1]
+    total_flows = len(detections)
+    avg_score = sum(d["combined_score"] for d in detections) / total_flows if total_flows > 0 else 0
+    
+    return {
+        "novel_patterns": novel_patterns,
+        "anomaly_scores": detections,
+        "stats": {
+            "total_flows": total_flows,
+            "avg_score": avg_score
+        }
+    }
+
+
+# ----- Adversarial Robustness Endpoints --------------------------------
+@app.get("/cpp/adversarial/metrics")
+async def get_adversarial_data():
+    """Get adversarial robustness metrics and attack detections."""
+    metrics = await get_adversarial_metrics(100)
+    sanitization = await get_sanitization_logs(100)
+    
+    attacks = [m for m in metrics if m["is_attack"] == 1]
+    avg_robustness = sum(m["robustness_score"] for m in metrics) / len(metrics) if metrics else 0
+    
+    return {
+        "robustness_scores": metrics,
+        "adversarial_detections": attacks,
+        "sanitization_logs": sanitization,
+        "stats": {
+            "avg_robustness": avg_robustness
+        }
+    }
+
+
+# ----- Protocol-Agnostic Endpoints -------------------------------------
+@app.get("/cpp/protocol-agnostic/analysis")
+async def get_protocol_agnostic_data():
+    """Get protocol-agnostic behavioral analysis."""
+    features = await get_protocol_features(100)
+    
+    # Group by protocol for similarity matrix
+    protocols = list(set(f["protocol"] for f in features))
+    similarity_matrix = []
+    
+    for p1 in protocols[:5]:  # Limit to 5 protocols for matrix
+        p1_features = [f for f in features if f["protocol"] == p1]
+        if not p1_features:
+            continue
+        
+        similarities = []
+        for p2 in protocols[:5]:
+            p2_features = [f for f in features if f["protocol"] == p2]
+            if not p2_features:
+                similarities.append(0.0)
+                continue
+            
+            # Simple similarity based on entropy
+            avg_entropy_p1 = sum(f["entropy"] for f in p1_features) / len(p1_features)
+            avg_entropy_p2 = sum(f["entropy"] for f in p2_features) / len(p2_features)
+            similarity = 1.0 - abs(avg_entropy_p1 - avg_entropy_p2) / 8.0
+            similarities.append(max(0.0, min(1.0, similarity)))
+        
+        similarity_matrix.append({
+            "protocol": p1,
+            "similarities": similarities
+        })
+    
+    covert_detections = [f for f in features if f["is_covert"] == 1]
+    
+    return {
+        "protocol_features": features,
+        "similarity_matrix": similarity_matrix,
+        "detections": features
+    }
+
+
+# ----- Alert Heatmap Endpoints -----------------------------------------
+@app.get("/alerts/heatmap")
+async def get_heatmap_data(range: str = Query(default="24h")):
+    """Get alert heatmap data for time-based visualization."""
+    hours_map = {"24h": 24, "7d": 168, "30d": 720}
+    hours = hours_map.get(range, 24)
+    
+    heatmap = await get_alert_heatmap(hours)
+    protocol_dist = await get_protocol_distribution()
+    geo_dist = await get_geo_distribution()
+    
+    return {
+        "heatmap": heatmap,
+        "protocol_distribution": protocol_dist,
+        "geo_distribution": geo_dist
+    }
+
+
+# ----- Performance Metrics Endpoints -----------------------------------
+@app.get("/cpp/performance/metrics")
+async def get_performance_data():
+    """Get performance metrics including throughput, latency, and SIMD stats."""
+    metrics = await get_performance_metrics()
+    return metrics
+
+
+# ----- C++ Engine Endpoints --------------------------------------------
+@app.get("/cpp/status")
+async def cpp_engine_status():
+    """Check if C++ engine is available."""
+    return {
+        "available": CPP_ENGINE_AVAILABLE,
+        "detectors": {
+            "cwnd": CWNDDetectorWrapper is not None,
+            "qos": QoSDetectorWrapper is not None
+        }
+    }
+
+
+@app.post("/cpp/analyze/cwnd")
+async def analyze_cwnd(request: Request):
+    """Analyze TCP flow for congestion window manipulation using C++ engine."""
+    if not CPP_ENGINE_AVAILABLE:
+        return {"error": "C++ engine not available", "anomalies": []}
+    
+    data = await request.json()
+    packets = data.get("packets", [])
+    sensitivity = data.get("sensitivity", 2.5)
+    
+    detector = CWNDDetectorWrapper(sensitivity)
+    anomalies = detector.analyze_packets(packets)
+    
+    return {
+        "engine": "cpp",
+        "detector": "cwnd",
+        "packets_analyzed": len(packets),
+        "anomalies_found": len(anomalies),
+        "anomalies": anomalies
+    }
+
+
+@app.post("/cpp/analyze/qos")
+async def analyze_qos(request: Request):
+    """Analyze IP flow for QoS/DSCP manipulation using C++ engine."""
+    if not CPP_ENGINE_AVAILABLE:
+        return {"error": "C++ engine not available", "anomalies": []}
+    
+    data = await request.json()
+    packets = data.get("packets", [])
+    threshold = data.get("threshold", 0.7)
+    
+    detector = QoSDetectorWrapper(threshold)
+    anomalies = detector.analyze_packets(packets)
+    
+    return {
+        "engine": "cpp",
+        "detector": "qos",
+        "packets_analyzed": len(packets),
+        "anomalies_found": len(anomalies),
+        "anomalies": anomalies
+    }

@@ -105,13 +105,32 @@ def _load_and_prepare(csv_path: str):
     rename = {cic: our for cic, our in CIC_TO_OUR.items() if cic in df.columns}
     df = df.rename(columns=rename)
 
+    # Derive total_packets = fwd + bwd (dataset stores them separately)
+    if "total_packets" not in df.columns and "fwd_packets" in df.columns:
+        df["total_packets"] = df["fwd_packets"] + df["bwd_packets"].fillna(0)
+
+    # Derive total_bytes = fwd_bytes + bwd_bytes
+    if "total_bytes" not in df.columns:
+        fwd_b = df.get("fwd_bytes", pd.Series(0.0, index=df.index))
+        bwd_b = df.get("bwd_bytes", pd.Series(0.0, index=df.index))
+        df["total_bytes"] = fwd_b + bwd_b
+
+    # Derive fwd_bwd_ratio
     if "fwd_bwd_ratio" not in df.columns and "fwd_packets" in df.columns:
         bwd = df["bwd_packets"].replace(0, 1)
         df["fwd_bwd_ratio"] = (df["fwd_packets"] / bwd).round(4)
 
+    # Fill any remaining FEATURE_COLS not mapped by CIC_TO_OUR with 0
     for col in FEATURE_COLS:
         if col not in df.columns:
             df[col] = 0.0
+
+    # Clamp -1 sentinel (CIC-IDS2017 uses -1 for unobserved window sizes)
+    if "avg_window_size" in df.columns:
+        df["avg_window_size"] = df["avg_window_size"].clip(lower=0)
+    for col in ["duration", "packets_per_sec", "bytes_per_sec", "mean_iat"]:
+        if col in df.columns:
+            df[col] = df[col].clip(lower=0)
 
     X = df[FEATURE_COLS].fillna(0).values.astype(float)
     X = np.where(np.isfinite(X), X, 0.0)
